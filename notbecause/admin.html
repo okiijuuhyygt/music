@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>後臺 — 又要等到你喝醉之後才能說愛你</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#f3ead4;--paper-soft:#ede2c4;--ink:#2a1f12;--ink-soft:#5e4a30;--ink-mute:#8a7556;
+    --brass:#b8801f;--brass-light:#d4a13a;--brass-deep:#6e4d10;--px:4px;--ok:#4a8b3a;--err:#b83a2a;
+    --pixel-en:"Press Start 2P",monospace;--mono:"VT323","Courier New",monospace;--sans:"Noto Sans TC","PingFang TC",sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);color:var(--ink);background:var(--paper);
+    background-image:repeating-linear-gradient(0deg,rgba(42,31,18,.022) 0 1px,transparent 1px 3px);
+    min-height:100vh;display:flex;justify-content:center;padding:28px 16px 60px;}
+  .wrap{width:100%;max-width:460px;}
+  .panel{background:var(--paper-soft);padding:22px 18px;margin-bottom:16px;
+    box-shadow:0 0 0 var(--px) var(--ink), var(--px) var(--px) 0 var(--px) var(--brass-deep);}
+  .t{font-family:var(--pixel-en);font-size:.62rem;color:var(--brass-deep);letter-spacing:1px;margin-bottom:14px;}
+  label{display:block;font-family:var(--mono);font-size:1.15rem;color:var(--ink-soft);margin:12px 0 3px;letter-spacing:1px;}
+  input,textarea{width:100%;font-family:var(--sans);font-size:.95rem;color:var(--ink);background:var(--paper);
+    border:none;padding:10px 12px;box-shadow:0 0 0 2px var(--ink);}
+  textarea{resize:vertical;min-height:50px;}
+  .row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:rgba(184,128,31,.07);padding:10px;margin-bottom:8px;box-shadow:0 0 0 2px var(--brass);}
+  .row .f{flex:1;min-width:120px;}
+  .row .sm{flex:0 0 64px;}
+  button{font-family:var(--pixel-en);font-size:.58rem;color:var(--paper);background:var(--brass);
+    padding:12px 14px;border:none;cursor:pointer;letter-spacing:1px;box-shadow:var(--px) var(--px) 0 0 var(--brass-deep);}
+  button:active{transform:translate(2px,2px);box-shadow:none;}
+  button.save{background:var(--ok);box-shadow:var(--px) var(--px) 0 0 #2f5e24;width:100%;font-size:.7rem;padding:16px;margin-top:8px;}
+  .hint{font-family:var(--mono);font-size:1rem;color:var(--ink-mute);line-height:1.25;margin-top:8px;}
+  .status{font-family:var(--mono);font-size:1.15rem;margin-top:12px;padding:10px;display:none;}
+  .status.ok{display:block;color:var(--ok);box-shadow:0 0 0 2px var(--ok);}
+  .status.err{display:block;color:var(--err);box-shadow:0 0 0 2px var(--err);}
+  #editor{display:none;}
+  a{color:var(--brass-deep);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="panel" id="loginPanel">
+    <div class="t">🔒 後臺登入</div>
+    <label>GitHub API Token(當密碼)</label>
+    <input type="password" id="tok" placeholder="ghp_... 或 github_pat_...">
+    <div class="hint">用 GitHub「細粒度 token」、只授權 <b>okiijuuhyygt/drunk</b> 這個 repo 的 Contents 讀寫。token 只存在你這台瀏覽器,不會上傳。</div>
+    <br><button id="loginBtn">登入 / 載入</button>
+    <div class="status" id="loginStatus"></div>
+  </div>
+
+  <div id="editor">
+    <div class="panel">
+      <div class="t">📝 基本資料</div>
+      <label>頂部標籤</label><input id="badge">
+      <label>歌名</label><input id="title">
+      <label>歌手</label><input id="artist">
+      <label>一句話</label><textarea id="tag"></textarea>
+      <label>頁尾</label><input id="footer">
+    </div>
+
+    <div class="panel">
+      <div class="t">🔗 串流連結</div>
+      <div id="links"></div>
+    </div>
+
+    <div class="panel">
+      <div class="t">🖼 封面圖</div>
+      <div class="hint">目前:<span id="curcover">cover.jpg</span>。要換就選新圖(會覆蓋 cover.jpg):</div>
+      <br><input type="file" id="coverfile" accept="image/*">
+    </div>
+
+    <button class="save" id="saveBtn">💾 儲存並更新網站</button>
+    <div class="status" id="saveStatus"></div>
+    <div class="hint" style="margin-top:14px;">儲存後 GitHub 約 1 分鐘 rebuild,正式頁 <a href="index.html" target="_blank">okiijuuhyygt.github.io/drunk</a> 就會更新。</div>
+  </div>
+
+</div>
+<script>
+const OWNER="okiijuuhyygt", REPO="drunk", BRANCH="main";
+const LS_TOKEN="alleys-admin-token-v1"; /* 跟巷弄站共用同 origin 的 token,你原本的就能用 */
+const API="https://api.github.com/repos/"+OWNER+"/"+REPO+"/contents/";
+let TOKEN="", configSha=null;
+
+function b64enc(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64dec(b){ return decodeURIComponent(escape(atob(b.replace(/\n/g,'')))); }
+function $(id){ return document.getElementById(id); }
+function setStatus(el,msg,ok){ el.className="status "+(ok?"ok":"err"); el.textContent=msg; }
+
+async function ghGet(path){
+  const r=await fetch(API+path+"?ref="+BRANCH+"&t="+Date.now(),{headers:{Authorization:"Bearer "+TOKEN,Accept:"application/vnd.github+json"}});
+  if(r.status===404) return {missing:true};
+  if(!r.ok) throw new Error("讀取失敗 "+r.status+"("+path+")");
+  return await r.json();
+}
+async function ghPut(path,contentB64,sha,msg){
+  const body={message:msg,content:contentB64,branch:BRANCH}; if(sha) body.sha=sha;
+  const r=await fetch(API+path,{method:"PUT",headers:{Authorization:"Bearer "+TOKEN,Accept:"application/vnd.github+json"},body:JSON.stringify(body)});
+  if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error("寫入失敗 "+r.status+" "+(e.message||"")); }
+  return await r.json();
+}
+
+function renderLinks(links){
+  const box=$("links"); box.innerHTML="";
+  (links||[]).forEach(function(l,i){
+    const d=document.createElement("div"); d.className="row";
+    d.innerHTML='<div class="f"><label>名稱</label><input class="ln" value="'+(l.name||"").replace(/"/g,"&quot;")+'"></div>'
+      +'<div class="f" style="flex:2 1 100%"><label>連結</label><input class="lu" value="'+(l.url||"").replace(/"/g,"&quot;")+'"></div>'
+      +'<div class="sm"><label>圖示</label><input class="li" value="'+(l.icon||"").replace(/"/g,"&quot;")+'"></div>'
+      +'<div class="sm"><label>顏色</label><input class="lc" value="'+(l.color||"").replace(/"/g,"&quot;")+'"></div>';
+    box.appendChild(d);
+  });
+}
+function collectLinks(){
+  return [...document.querySelectorAll("#links .row")].map(function(r){
+    return {name:r.querySelector(".ln").value, url:r.querySelector(".lu").value, icon:r.querySelector(".li").value, color:r.querySelector(".lc").value};
+  }).filter(function(l){return l.url||l.name;});
+}
+
+async function login(){
+  TOKEN=$("tok").value.trim();
+  if(!TOKEN){ setStatus($("loginStatus"),"請貼 token",false); return; }
+  try{
+    const c=await ghGet("config.json");
+    if(c.missing) throw new Error("找不到 config.json");
+    const cfg=JSON.parse(b64dec(c.content)); configSha=c.sha;
+    $("badge").value=cfg.badge||""; $("title").value=cfg.title||""; $("artist").value=cfg.artist||"";
+    $("tag").value=cfg.tag||""; $("footer").value=cfg.footer||""; $("curcover").textContent=cfg.cover||"cover.jpg";
+    renderLinks(cfg.links);
+    localStorage.setItem(LS_TOKEN,TOKEN);
+    $("loginPanel").style.display="none"; $("editor").style.display="block";
+  }catch(e){ setStatus($("loginStatus"),"登入失敗:"+e.message+"(token 對嗎?權限給 Contents 讀寫了嗎?)",false); }
+}
+
+function fileToB64(file){ return new Promise(function(res,rej){ const r=new FileReader(); r.onload=function(){res(r.result.split(",")[1]);}; r.onerror=rej; r.readAsDataURL(file); }); }
+
+async function save(){
+  setStatus($("saveStatus"),"儲存中…",true);
+  try{
+    // 1) cover (if chosen)
+    const f=$("coverfile").files[0];
+    if(f){
+      const cb=await fileToB64(f);
+      let csha=null; const cc=await ghGet("cover.jpg"); if(!cc.missing) csha=cc.sha;
+      await ghPut("cover.jpg",cb,csha,"後臺:更新封面");
+    }
+    // 2) config.json
+    const cfg={ badge:$("badge").value, title:$("title").value, artist:$("artist").value,
+      tag:$("tag").value, footer:$("footer").value, cover:$("curcover").textContent||"cover.jpg", links:collectLinks() };
+    const put=await ghPut("config.json", b64enc(JSON.stringify(cfg,null,2)), configSha, "後臺:更新內容");
+    configSha=put.content.sha;
+    setStatus($("saveStatus"),"✅ 存好了!約 1 分鐘後正式頁就會更新。",true);
+    $("coverfile").value="";
+  }catch(e){ setStatus($("saveStatus"),"❌ "+e.message,false); }
+}
+
+$("loginBtn").onclick=login;
+$("saveBtn").onclick=save;
+window.addEventListener("load",function(){ const t=localStorage.getItem(LS_TOKEN); if(t){ $("tok").value=t; login(); } });
+</script>
+</body>
+</html>

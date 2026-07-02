@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>又要等到你喝醉之後才能說愛你 — 陳則皞</title>
+<meta property="og:title" content="又要等到你喝醉之後才能說愛你 — 陳則皞">
+<meta property="og:description" content="這次，我把它重新做了一遍。各平台串流上線。">
+<meta property="og:image" content="cover.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== 巷弄皮(GameBoy/像素・羊皮紙+黃銅)— 換皮改這區 ===== */
+  :root{
+    --paper:#f3ead4; --paper-soft:#ede2c4; --paper-edge:#c9b88c;
+    --ink:#2a1f12; --ink-soft:#5e4a30; --ink-mute:#8a7556;
+    --brass:#b8801f; --brass-light:#d4a13a; --brass-deep:#6e4d10;
+    --px:4px;
+    --pixel-en:"Press Start 2P",monospace;
+    --mono:"VT323","Courier New",monospace;
+    --sans:"Noto Sans TC","PingFang TC",sans-serif;
+  }
+  /* ===================================================== */
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:var(--sans);color:var(--ink);background:var(--paper);
+    background-image:repeating-linear-gradient(0deg,rgba(42,31,18,.022) 0 1px,transparent 1px 3px);
+    min-height:100vh;display:flex;justify-content:center;padding:34px 20px 56px;line-height:1.55;}
+  .wrap{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;}
+  .panel{width:100%;background:var(--paper-soft);padding:26px 22px 24px;
+    box-shadow:0 0 0 var(--px) var(--ink), var(--px) var(--px) 0 var(--px) var(--brass-deep);
+    display:flex;flex-direction:column;align-items:center;}
+  .badge{font-family:var(--pixel-en);font-size:.5rem;color:var(--paper);background:var(--brass);
+    padding:6px 9px;letter-spacing:1px;box-shadow:var(--px) var(--px) 0 0 var(--brass-deep);}
+  .cover{width:64%;max-width:240px;aspect-ratio:1/1;object-fit:cover;margin-top:18px;
+    box-shadow:0 0 0 var(--px) var(--paper-soft), 0 0 0 calc(var(--px)*2) var(--paper-soft);}
+  h1{font-size:1.28rem;font-weight:700;margin-top:22px;text-align:center;color:var(--ink);}
+  .artist{font-family:var(--mono);font-size:1.35rem;color:var(--brass-deep);margin-top:4px;letter-spacing:3px;}
+  .tag{color:var(--ink-soft);font-size:.86rem;margin-top:12px;text-align:center;max-width:280px;}
+  .links{width:100%;margin-top:24px;display:flex;flex-direction:column;gap:11px;}
+  a.btn{display:flex;align-items:center;gap:13px;width:100%;padding:13px 15px;
+    background:var(--paper);color:var(--ink);text-decoration:none;
+    font-family:var(--mono);font-size:1.4rem;line-height:1;letter-spacing:1px;
+    box-shadow:0 0 0 var(--px) var(--ink), var(--px) var(--px) 0 0 var(--brass);transition:transform .1s,background .15s;}
+  a.btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--px) var(--ink);}
+  a.btn:hover{background:#f8f1de;}
+  .ico{width:30px;height:30px;flex:0 0 30px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15);}
+  .go{margin-left:auto;font-family:var(--pixel-en);font-size:.5rem;color:var(--brass-deep);}
+  .hint{margin-top:22px;font-family:var(--mono);font-size:1rem;color:var(--ink-mute);text-align:center;max-width:300px;line-height:1.2;}
+  .foot{margin-top:22px;font-family:var(--pixel-en);font-size:.5rem;color:var(--ink-mute);letter-spacing:1px;}
+  .adminlink{margin-top:12px;font-family:var(--pixel-en);font-size:9px;letter-spacing:1px;color:var(--paper-edge);opacity:.55;text-decoration:none;}
+  .adminlink:hover{color:var(--ink-mute);opacity:1;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <span class="badge" id="badge">♪ NOW STREAMING</span>
+      <img class="cover" id="cover" src="cover.jpg" alt="封面">
+      <h1 id="title">　</h1>
+      <div class="artist" id="artist">　</div>
+      <div class="tag" id="tag">　</div>
+      <div class="links" id="links"></div>
+    </div>
+    <div class="foot" id="foot">　</div>
+    <a class="adminlink" href="admin.html">系統登入</a>
+  </div>
+<script>
+(async function(){
+  try{
+    const c = await (await fetch('config.json?t='+Date.now())).json();
+    document.title = c.title + ' — ' + c.artist;
+    document.getElementById('badge').textContent = c.badge || '♪ NOW STREAMING';
+    document.getElementById('cover').src = (c.cover||'cover.jpg') + '?t=' + Date.now();
+    document.getElementById('title').textContent = c.title || '';
+    document.getElementById('artist').textContent = c.artist || '';
+    document.getElementById('tag').textContent = c.tag || '';
+    document.getElementById('foot').textContent = c.footer || '';
+    const box = document.getElementById('links'); box.innerHTML='';
+    (c.links||[]).forEach(function(l){
+      const a=document.createElement('a'); a.className='btn'; a.href=l.url; a.target='_blank'; a.rel='noopener';
+      a.innerHTML = '<span class="ico" style="background:'+(l.color||'#888')+'">'+(l.icon||'♪')+'</span>'
+                  + (l.name||'') + '<span class="go">PLAY ›</span>';
+      a.addEventListener('click', function(){
+        if(window.goatcounter && window.goatcounter.count){
+          window.goatcounter.count({ path:'click-'+(l.name||'link').toLowerCase().replace(/\s+/g,'-'), title:(l.name||'')+' 點擊', event:true });
+        }
+      });
+      box.appendChild(a);
+    });
+  }catch(e){ document.getElementById('title').textContent='(載入失敗,檢查 config.json)'; }
+})();
+</script>
+<!-- GoatCounter 訪客/點擊追蹤 → 後台 https://haohao.goatcounter.com -->
+<script data-goatcounter="https://haohao.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
