@@ -1,11 +1,34 @@
-{"badge": "在ㄎㄧㄤ掉的時候承認的事,天亮以後也算數",
+{
+ "badge": "在ㄎㄧㄤ掉的時候承認的事,天亮以後也算數",
  "title": "不是因為你喜歡我 所以我才喜歡你",
  "artist": "陳則皞 & 孟君",
  "tag": "有些喜歡不是被誰先喜歡才開始的。",
  "footer": "陳則皞 · 巷弄故事館",
  "cover": "cover.jpg",
  "links": [
-  {"name": "Spotify", "url": "https://open.spotify.com/track/76U4G7xYEcpnKyEE8NTgMg", "icon": "♪", "color": "#1DB954"},
-  {"name": "Apple Music", "url": "https://music.apple.com/tw/album/%E4%B8%8D%E6%98%AF%E5%9B%A0%E7%82%BA%E4%BD%A0%E5%96%9C%E6%AD%A1%E6%88%91-%E6%89%80%E4%BB%A5%E6%88%91%E6%89%8D%E5%96%9C%E6%AD%A1%E4%BD%A0-single/6776574087", "icon": "⌘", "color": "#fb4c8a"},
-  {"name": "YouTube", "url": "https://youtu.be/uu_bRwMlKcE", "icon": "▶", "color": "#ff0033"}
- ]}
+  {
+   "name": "Spotify",
+   "url": "https://open.spotify.com/track/76U4G7xYEcpnKyEE8NTgMg",
+   "icon": "♪",
+   "color": "#1DB954"
+  },
+  {
+   "name": "Apple Music",
+   "url": "https://music.apple.com/tw/album/%E4%B8%8D%E6%98%AF%E5%9B%A0%E7%82%BA%E4%BD%A0%E5%96%9C%E6%AD%A1%E6%88%91-%E6%89%80%E4%BB%A5%E6%88%91%E6%89%8D%E5%96%9C%E6%AD%A1%E4%BD%A0-single/6776574087",
+   "icon": "⌘",
+   "color": "#fb4c8a"
+  },
+  {
+   "name": "KKBOX",
+   "url": "https://kkbox.fm/Xd1aDts",
+   "icon": "K",
+   "color": "#0ec0c0"
+  },
+  {
+   "name": "YouTube",
+   "url": "https://youtu.be/uu_bRwMlKcE",
+   "icon": "▶",
+   "color": "#ff0033"
+  }
+ ]
+}
