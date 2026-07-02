@@ -44,7 +44,7 @@
     <div class="t">🔒 後臺登入</div>
     <label>GitHub API Token(當密碼)</label>
     <input type="password" id="tok" placeholder="ghp_... 或 github_pat_...">
-    <div class="hint">用 GitHub「細粒度 token」、只授權 <b>okiijuuhyygt/drunk</b> 這個 repo 的 Contents 讀寫。token 只存在你這台瀏覽器,不會上傳。</div>
+    <div class="hint">用 GitHub「細粒度 token」、只授權 <b>okiijuuhyygt/music</b> 這個 repo(母站,以後每首歌共用) 的 Contents 讀寫。token 只存在你這台瀏覽器,不會上傳。</div>
     <br><button id="loginBtn">登入 / 載入</button>
     <div class="status" id="loginStatus"></div>
   </div>
@@ -72,12 +72,14 @@
 
     <button class="save" id="saveBtn">💾 儲存並更新網站</button>
     <div class="status" id="saveStatus"></div>
-    <div class="hint" style="margin-top:14px;">儲存後 GitHub 約 1 分鐘 rebuild,正式頁 <a href="index.html" target="_blank">okiijuuhyygt.github.io/drunk</a> 就會更新。</div>
+    <div class="hint" style="margin-top:14px;">儲存後 GitHub 約 1 分鐘 rebuild,正式頁 <a href="index.html" target="_blank">這首歌的頁面</a> 就會更新。</div>
   </div>
 
 </div>
 <script>
-const OWNER="okiijuuhyygt", REPO="drunk", BRANCH="main";
+const OWNER="okiijuuhyygt", REPO="music", BRANCH="main";
+const DIR=(location.pathname.split("/").filter(Boolean)[1])||"";  // /music/<slug>/admin.html → slug
+const P=f=>DIR? DIR+"/"+f : f;  // repo 內路徑
 const LS_TOKEN="alleys-admin-token-v1"; /* 跟巷弄站共用同 origin 的 token,你原本的就能用 */
 const API="https://api.github.com/repos/"+OWNER+"/"+REPO+"/contents/";
 let TOKEN="", configSha=null;
@@ -121,7 +123,7 @@ async function login(){
   TOKEN=$("tok").value.trim();
   if(!TOKEN){ setStatus($("loginStatus"),"請貼 token",false); return; }
   try{
-    const c=await ghGet("config.json");
+    const c=await ghGet(P("config.json"));
     if(c.missing) throw new Error("找不到 config.json");
     const cfg=JSON.parse(b64dec(c.content)); configSha=c.sha;
     $("badge").value=cfg.badge||""; $("title").value=cfg.title||""; $("artist").value=cfg.artist||"";
@@ -141,13 +143,13 @@ async function save(){
     const f=$("coverfile").files[0];
     if(f){
       const cb=await fileToB64(f);
-      let csha=null; const cc=await ghGet("cover.jpg"); if(!cc.missing) csha=cc.sha;
-      await ghPut("cover.jpg",cb,csha,"後臺:更新封面");
+      let csha=null; const cc=await ghGet(P("cover.jpg")); if(!cc.missing) csha=cc.sha;
+      await ghPut(P("cover.jpg"),cb,csha,"後臺:更新封面");
     }
     // 2) config.json
     const cfg={ badge:$("badge").value, title:$("title").value, artist:$("artist").value,
       tag:$("tag").value, footer:$("footer").value, cover:$("curcover").textContent||"cover.jpg", links:collectLinks() };
-    const put=await ghPut("config.json", b64enc(JSON.stringify(cfg,null,2)), configSha, "後臺:更新內容");
+    const put=await ghPut(P("config.json"), b64enc(JSON.stringify(cfg,null,2)), configSha, "後臺:更新內容");
     configSha=put.content.sha;
     setStatus($("saveStatus"),"✅ 存好了!約 1 分鐘後正式頁就會更新。",true);
     $("coverfile").value="";
